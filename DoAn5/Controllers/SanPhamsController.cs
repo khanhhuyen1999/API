@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DoAn5.Models;
+using DoAn5.Helper;
+using DoAn5.Services;
+using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.Messaging;
 
 namespace DoAn5.Controllers
 {
@@ -14,10 +17,13 @@ namespace DoAn5.Controllers
     public class SanPhamsController : ControllerBase
     {
         private readonly DOAN5Context _context;
+        private readonly IFileService _fileService;
+        private object sanphamClone;
 
-        public SanPhamsController(DOAN5Context context)
+        public SanPhamsController(DOAN5Context context, IFileService fileService)
         {
             _context = context;
+            _fileService = fileService;
         }
 
         // GET: api/SanPhams
@@ -31,6 +37,7 @@ namespace DoAn5.Controllers
         }
 
         // GET: api/SanPhams/5
+
         [HttpGet("{id}")]
         public async Task<ActionResult<SanPham>> GetSanPham(int id)
         {
@@ -43,7 +50,77 @@ namespace DoAn5.Controllers
 
             return sanPham;
         }
+        [HttpGet("pagination")]
+        public ActionResult<IEnumerable<SanPham>> GetPage(int page, int pageSize)
+        {
+            var paging = Pagination.GetPaged(_context.SanPham, page, pageSize);
 
+            return Ok(paging);
+        }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutSanPham(int id, [FromForm] SanPhamClone)
+        {
+            var sanpham = _context.SanPham.Find(id);
+
+            if (sanpham == null)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                sanpham.MaSp = sanphamClone.MaSp;
+                sanpham.TenSp = sanphamClone.TenSp;
+                sanpham.MoTa = sanphamClone.MoTa;
+                sanpham.Anh = sanphamClone.Anh;
+                sanpham.MaLoai = sanphamClone.MaLoai;
+                sanpham.SoLuong = sanphamClone.Soluong;
+                sanpham.Gia = sanphamClone.Gia;
+
+                var image = _fileService.WriteFile(SanPhamClone.Image, "/sanpham);
+                sanpham.Image = image;
+
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!sanphamExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [HttpPost]
+        public async Task<ActionResult<SanPham>> PostSanpham([FromForm] SanPhamClone sanphamClone)
+        {
+            try
+            {
+                var sanpham = sanphamClone.get();
+                var image = _fileService.WriteFile(sanphamClone.Image, "/sanpham");
+                sanpham.Image = image;
+                sanpham.CreatedAt = DateTime.Now;
+                _context.SanPham.Add(sanpham);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction("GetSanPham", new { id =sanpham.MaSp }, sanpham);
+            }
+            catch (Exception e)
+            {
+                return Ok(new { message = e.Message });
+            }
+        }
+        [HttpGet("tim-kiem")]
+        public IEnumerable<SanPham> GetTimsanpham(string key)
+        {
+            var sanPhams = _context.SanPham.Where(vl => vl.TenSp.IndexOf(key) != -1);
+            return sanPhams;
+        }
         [HttpGet("get-loai/{id}")]
         public IEnumerable<SanPham> GetLoaiSanPham(int id)
         {
