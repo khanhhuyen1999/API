@@ -11,7 +11,8 @@ namespace DoAn5.Services
     public interface IFileService
     {
         void SetDir(string path);
-        string WriteFile(IFormFile file, string dir);
+        string WriteFile(string dir, IFormFile file);
+        string WriteFileBase64(string dir, string data);
     }
 
     public class FileService : IFileService
@@ -22,7 +23,7 @@ namespace DoAn5.Services
             this.dir = dir;
         }
 
-        public string WriteFile(IFormFile file, string dir)
+        public string WriteFile(string dir, IFormFile file)
         {
             if (dir == null)
                 dir = this.dir;
@@ -52,6 +53,42 @@ namespace DoAn5.Services
             {
                 return null;
             }
+        }
+        public string WriteFileBase64(string dir, string data)
+        {
+            if (dir == null)
+                dir = this.dir;
+            else
+                dir = this.dir + dir;
+
+            string[] rdata = data.Split(";");
+
+            try
+            {
+                if (rdata.Length == 3)
+                {
+                    string name = rdata[0];
+                    string size = rdata[1];
+                    string base64 = rdata[2];
+
+                    if (base64.Contains("base64,"))
+                    {
+                        base64 = base64.Substring(base64.IndexOf("base64,", 0) + 7);
+                    }
+
+                    var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), dir);
+                    var fileExtension = Path.GetExtension(name);
+                    name = Guid.NewGuid() + fileExtension;
+                    var fullPath = Path.Combine(pathToSave, name);
+                    File.WriteAllBytes(fullPath, Convert.FromBase64String(base64));
+                    return name;
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            return null;
         }
     }
 }

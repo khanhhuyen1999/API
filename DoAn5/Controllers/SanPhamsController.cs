@@ -50,6 +50,7 @@ namespace DoAn5.Controllers
 
             return sanPham;
         }
+
         [HttpGet("pagination")]
         public ActionResult<IEnumerable<SanPham>> GetPage(int page, int pageSize)
         {
@@ -57,108 +58,37 @@ namespace DoAn5.Controllers
 
             return Ok(paging);
         }
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutSanPham(int id, [FromForm] SanPhamClone)
-        {
-            var sanpham = _context.SanPham.Find(id);
 
-            if (sanpham == null)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutSanPham(int id, [FromBody] Dictionary<string, object> formData)
+        {
+            var sp = _context.SanPham.Find(id);
+
+            if (sp == null)
             {
                 return BadRequest();
             }
 
             try
             {
-                sanpham.MaSp = sanphamClone.MaSp;
-                sanpham.TenSp = sanphamClone.TenSp;
-                sanpham.MoTa = sanphamClone.MoTa;
-                sanpham.Anh = sanphamClone.Anh;
-                sanpham.MaLoai = sanphamClone.MaLoai;
-                sanpham.SoLuong = sanphamClone.Soluong;
-                sanpham.Gia = sanphamClone.Gia;
+                sp.MaLoai = int.Parse(formData["MaLoai"].ToString());
+                sp.TenSp = formData["TenSP"].ToString();
+                sp.MoTa = formData["MoTa"].ToString();
+                sp.SoLuong = int.Parse(formData["SoLuong"].ToString());
+                sp.Gia = int.Parse(formData["Gia"].ToString());
 
-                var image = _fileService.WriteFile(SanPhamClone.Image, "/sanpham);
-                sanpham.Image = image;
+                if (formData.ContainsKey("HinhAnh"))
+                {
+                    var Image = formData["HinhAnh"].ToString();
+
+                    if ((sp.Anh = _fileService.WriteFileBase64("/sanpham", Image)) == null)
+                    {
+                        sp.Anh = "error.jpg";
+                    }
+                }
 
                 await _context.SaveChangesAsync();
                 return Ok();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!sanphamExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-        }
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPost]
-        public async Task<ActionResult<SanPham>> PostSanpham([FromForm] SanPhamClone sanphamClone)
-        {
-            try
-            {
-                var sanpham = sanphamClone.get();
-                var image = _fileService.WriteFile(sanphamClone.Image, "/sanpham");
-                sanpham.Image = image;
-                sanpham.CreatedAt = DateTime.Now;
-                _context.SanPham.Add(sanpham);
-                await _context.SaveChangesAsync();
-
-                return CreatedAtAction("GetSanPham", new { id =sanpham.MaSp }, sanpham);
-            }
-            catch (Exception e)
-            {
-                return Ok(new { message = e.Message });
-            }
-        }
-        [HttpGet("tim-kiem")]
-        public IEnumerable<SanPham> GetTimsanpham(string key)
-        {
-            var sanPhams = _context.SanPham.Where(vl => vl.TenSp.IndexOf(key) != -1);
-            return sanPhams;
-        }
-        [HttpGet("get-loai/{id}")]
-        public IEnumerable<SanPham> GetLoaiSanPham(int id)
-        {
-            var sanPham = _context.SanPham.Where(sp => sp.MaLoai == id);
-
-            return sanPham;
-        }
-        [HttpGet("get-loai-top4/{id}")]
-        public IEnumerable<SanPham> GetLoaiSanPhamTop4(int id)
-        {
-            var sanPham = _context.SanPham.Where(sp => sp.MaLoai == id).Take(4);
-
-            return sanPham;
-        }
-        [HttpGet("get-loai-top6/{id}")]
-        public IEnumerable<SanPham> GetLoaiSanPhamTop6(int id)
-        {
-            var sanPham = _context.SanPham.Where(sp => sp.MaLoai == id).Take(6);
-
-            return sanPham;
-        }
-
-        // PUT: api/SanPhams/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutSanPham(int id, SanPham sanPham)
-        {
-            if (id != sanPham.MaSp)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(sanPham).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -171,20 +101,69 @@ namespace DoAn5.Controllers
                     throw;
                 }
             }
-
-            return NoContent();
         }
 
-        // POST: api/SanPhams
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<SanPham>> PostSanPham(SanPham sanPham)
+        public async Task<ActionResult<SanPham>> PostSanpham([FromBody] Dictionary<string, object> formData)
         {
-            _context.SanPham.Add(sanPham);
-            await _context.SaveChangesAsync();
+            try
+            {
+                var sp = new SanPham();
 
-            return CreatedAtAction("GetSanPham", new { id = sanPham.MaSp }, sanPham);
+                sp.MaLoai = int.Parse(formData["MaLoai"].ToString());
+                sp.TenSp = formData["TenSP"].ToString();
+                sp.MoTa = formData["MoTa"].ToString();
+                sp.SoLuong = int.Parse(formData["SoLuong"].ToString());
+                sp.Gia = int.Parse(formData["Gia"].ToString());
+
+                var Image = formData["HinhAnh"].ToString();
+
+                if ((sp.Anh = _fileService.WriteFileBase64("/sanpham", Image)) == null)
+                {
+                    sp.Anh = "error.jpg";
+                }
+
+                _context.SanPham.Add(sp);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction("GetSanPham", new { id = sp.MaSp }, sp);
+            }
+            catch (Exception e)
+            {
+                return Ok(new { message = e.Message });
+            }
+        }
+
+        [HttpGet("tim-kiem")]
+        public IEnumerable<SanPham> GetTimsanpham(string key)
+        {
+            var sanPhams = _context.SanPham.Where(vl => vl.TenSp.IndexOf(key) != -1);
+            return sanPhams;
+        }
+
+        [HttpGet("get-loai/{id}")]
+        public IEnumerable<SanPham> GetLoaiSanPham(int id)
+        {
+            var sanPham = _context.SanPham.Where(sp => sp.MaLoai == id);
+
+            return sanPham;
+        }
+
+        [HttpGet("get-loai-top4/{id}")]
+        public IEnumerable<SanPham> GetLoaiSanPhamTop4(int id)
+        {
+            var sanPham = _context.SanPham.Where(sp => sp.MaLoai == id).Take(4);
+
+            return sanPham;
+        }
+
+        [HttpGet("get-loai-top6/{id}")]
+        public IEnumerable<SanPham> GetLoaiSanPhamTop6(int id)
+        {
+            var sanPham = _context.SanPham.Where(sp => sp.MaLoai == id).Take(6);
+
+            return sanPham;
         }
 
         // DELETE: api/SanPhams/5

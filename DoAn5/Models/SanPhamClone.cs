@@ -10,7 +10,6 @@ namespace DoAn5.Models
         public string TenSp { get; set; }
         public string MoTa { get; set; }
         public int? MaLoai { get; set; }
-        public string Anh { get; set; }
         public int? SoLuong { get; set; }
         public int? Gia { get; set; }
         public IFormFile Image { get; set; }
@@ -24,7 +23,7 @@ namespace DoAn5.Models
             item.MaLoai = MaLoai;
             item.SoLuong = SoLuong;
             item.Gia = Gia;    
-     return item;
+            return item;
         }
     }
 }
