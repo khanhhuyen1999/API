@@ -1,12 +1,10 @@
-﻿using System;
+﻿using DoAn5.Helper;
+using DoAn5.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using DoAn5.Models;
-
 namespace DoAn5.Controllers
 {
     [Route("api/[controller]")]
@@ -39,6 +37,14 @@ namespace DoAn5.Controllers
             }
 
             return loaiSp;
+        }
+
+        [HttpGet("pagination")]
+        public ActionResult<IEnumerable<LoaiSp>> GetPage(int page, int pageSize)
+        {
+            var paging = Pagination.GetPaged(_context.LoaiSp, page, pageSize);
+
+            return Ok(paging);
         }
 
         // PUT: api/LoaiSps/5

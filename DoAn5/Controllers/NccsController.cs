@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DoAn5.Models;
+using DoAn5.Helper;
+using DoAn5.Services;
+using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.Messaging;
 
 namespace DoAn5.Controllers
 {
@@ -39,6 +42,13 @@ namespace DoAn5.Controllers
             }
 
             return ncc;
+        }
+        [HttpGet("pagination")]
+        public ActionResult<IEnumerable<Ncc>> GetPage(int page, int pageSize)
+        {
+            var paging = Pagination.GetPaged(_context.Ncc, page, pageSize);
+
+            return Ok(paging);
         }
 
         // PUT: api/Nccs/5
